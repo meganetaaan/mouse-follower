@@ -1,0 +1,12 @@
+{
+	"files": {
+		"includes": ["src/**/*"],
+		"ignoreUnknown": false
+	},
+	"linter": {
+		"enabled": true
+	},
+	"formatter": {
+		"enabled": true
+	}
+}
