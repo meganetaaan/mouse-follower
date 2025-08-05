@@ -45,6 +45,9 @@ jobs:
 
     - name: Build project
       run: npm run build
+      env:
+        NODE_ENV: production
+        GITHUB_PAGES: true
 
     - name: Upload build artifacts
       if: matrix.node-version == 20
