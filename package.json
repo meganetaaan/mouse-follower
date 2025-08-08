@@ -1,14 +1,40 @@
 {
 	"name": "mouse-follower",
-	"private": true,
-	"version": "0.0.0",
+	"private": false,
+	"version": "1.0.0",
+	"description": "TypeScript library for creating animated sprites that smoothly follow mouse cursor or other targets using physics-based movement",
+	"keywords": ["mouse", "follower", "sprite", "animation", "canvas", "physics", "typescript"],
+	"author": "meganetaaan",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/meganetaaan/mouse-follower.git"
+	},
+	"homepage": "https://meganetaaan.github.io/mouse-follower/",
 	"type": "module",
+	"main": "./dist/mouse-follower.umd.js",
+	"module": "./dist/mouse-follower.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/mouse-follower.js",
+			"require": "./dist/mouse-follower.umd.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
 	"scripts": {
 		"dev": "vite",
-		"build": "tsc && vite build",
+		"build": "npm run build:lib && npm run build:demo",
+		"build:lib": "tsc -p tsconfig.lib.json && vite build --config vite.config.lib.ts",
+		"build:demo": "NODE_ENV=production GITHUB_PAGES=true vite build --config vite.config.ts",
 		"test": "vitest",
 		"preview": "vite preview",
-		"check:fix": "biome check --fix"
+		"check:fix": "biome check --fix",
+		"prepublishOnly": "npm run test && npm run build:lib"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.1.3",

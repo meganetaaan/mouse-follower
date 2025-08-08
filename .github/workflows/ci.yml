@@ -44,7 +44,7 @@ jobs:
       run: npm test
 
     - name: Build project
-      run: npm run build
+      run: npm run build:demo
       env:
         NODE_ENV: production
         GITHUB_PAGES: true
@@ -54,14 +54,14 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
-        path: dist/
+        path: dist-demo/
         retention-days: 7
 
     - name: Upload GitHub Pages artifact
       if: matrix.node-version == 20 && github.ref == 'refs/heads/develop' && github.event_name == 'push'
       uses: actions/upload-pages-artifact@v3
       with:
-        path: dist/
+        path: dist-demo/
 
   deploy:
     name: Deploy to GitHub Pages
