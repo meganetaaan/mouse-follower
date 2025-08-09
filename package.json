@@ -11,6 +11,9 @@
 		"url": "https://github.com/meganetaaan/mouse-follower.git"
 	},
 	"homepage": "https://meganetaaan.github.io/mouse-follower/",
+	"engines": {
+		"node": ">=20.19.0"
+	},
 	"type": "module",
 	"main": "./dist/mouse-follower.umd.js",
 	"module": "./dist/mouse-follower.js",
