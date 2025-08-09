@@ -1,4 +1,10 @@
 // Mouse Follower Library - Main Entry Point
+
+// Re-export physics utilities for advanced users
+export {
+	type PhysicsState,
+	updatePhysics,
+} from "./follower/physics.js";
 export {
 	type AnimationConfig,
 	type AnimationsConfig,
@@ -19,10 +25,4 @@ export {
 	SPRITE_PRESET_STACK_CHAN,
 	// Sprite System
 	type SpriteOptions,
-} from "./follower";
-
-// Re-export physics utilities for advanced users
-export {
-	type PhysicsState,
-	updatePhysics,
-} from "./follower/physics";
+} from "./follower.js";

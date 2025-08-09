@@ -2,8 +2,12 @@ import {
 	type PhysicsState,
 	type Position,
 	updatePhysics,
-} from "./follower/physics";
-import { createSprite, renderSpriteAt, type Sprite } from "./follower/sprite";
+} from "./follower/physics.js";
+import {
+	createSprite,
+	renderSpriteAt,
+	type Sprite,
+} from "./follower/sprite.js";
 import {
 	type AnimationsConfig,
 	DEFAULT_ANIMATIONS,
@@ -15,7 +19,7 @@ import {
 	type Follower as IFollower,
 	MouseTarget,
 	OffsetTarget,
-} from "./follower/types";
+} from "./follower/types.js";
 
 interface FlattenedOptions {
 	followTarget: FollowTarget;
@@ -407,7 +411,7 @@ export {
 	type Position,
 	SPRITE_PRESET_STACK_CHAN,
 	type SpriteOptions,
-} from "./follower/types";
+} from "./follower/types.js";
 
 // Export the interface as type alias
 export type Follower = IFollower;
