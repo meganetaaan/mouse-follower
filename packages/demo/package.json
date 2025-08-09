@@ -6,12 +6,14 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"check:fix": "biome check --fix"
 	},
 	"dependencies": {
 		"@meganetaaan/mouse-follower": "workspace:*"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^2.1.3",
 		"typescript": "~5.8.3",
 		"vite": "^7.0.4"
 	}

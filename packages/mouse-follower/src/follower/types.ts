@@ -141,7 +141,7 @@ export const DEFAULT_ANIMATIONS: AnimationsConfig = {
 
 // Sprite presets
 export const SPRITE_PRESET_STACK_CHAN: SpriteOptions = {
-	url: `${typeof import.meta !== "undefined" && import.meta.env ? import.meta.env.BASE_URL : "/"}stack-chan.png`,
+	url: new URL("../../assets/stack-chan.png", import.meta.url).href,
 	width: 32,
 	height: 32,
 	frames: 4,

@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import { resolve } from 'path'
+import { resolve } from 'node:path'
 
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' && process.env.GITHUB_PAGES === 'true' 
@@ -10,7 +10,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@meganetaaan/mouse-follower': resolve(__dirname, '../mouse-follower/src/index.ts')
+      '@meganetaaan/mouse-follower': resolve(__dirname, '../mouse-follower/dist/index.js')
     }
   }
 })
