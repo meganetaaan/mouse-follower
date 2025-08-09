@@ -22,29 +22,35 @@ jobs:
         fetch-depth: 0 # Semantic release needs full history
         persist-credentials: false # Use GITHUB_TOKEN for release
 
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: 20
-        cache: 'npm'
+        cache: 'pnpm'
         registry-url: 'https://registry.npmjs.org'
 
     - name: Install dependencies
-      run: npm ci
+      run: pnpm install
 
     - name: Run tests
-      run: npm test
+      run: pnpm run test
 
     - name: Run linting
-      run: npm run check:fix
+      run: pnpm run check:fix
 
     - name: Build library
-      run: npm run build:lib
+      run: pnpm run build:lib
 
     - name: Configure npm authentication
       run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
     - name: Semantic Release
+      working-directory: packages/mouse-follower
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -56,7 +62,7 @@ jobs:
       with:
         name: release-artifacts
         path: |
-          dist/
-          package.json
+          packages/mouse-follower/dist/
+          packages/mouse-follower/package.json
           CHANGELOG.md
         retention-days: 30

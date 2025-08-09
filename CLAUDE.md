@@ -4,42 +4,60 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- `npm run dev` - Start Vite development server for interactive demo
-- `npm run build` - TypeScript compilation followed by Vite production build
-- `npm test` - Run all tests with Vitest
-- `npm run preview` - Preview the production build locally
-- `npm run check:fix` - Run Biome linting and formatting with auto-fix
+This project uses pnpm workspace to separate the library and demo application:
+
+- `pnpm dev` - Start Vite development server for demo application
+- `pnpm build` - Build both library and demo
+- `pnpm build:lib` - Build library only
+- `pnpm build:demo` - Build demo only
+- `pnpm test` - Run library tests with Vitest
+- `pnpm check:fix` - Run Biome linting and formatting with auto-fix
+- `pnpm publish:lib` - Publish library to npm
+
+## Project Structure
+
+This is a pnpm workspace containing two packages:
+
+```
+packages/
+├── mouse-follower/    # Main library (@meganetaaan/mouse-follower)
+└── demo/             # Demo application (private package)
+```
 
 ## Architecture Overview
 
-This is a TypeScript mouse follower animation library built with Vite. It creates animated sprites that smoothly follow the mouse cursor or other targets using physics-based movement. The library supports multiple followers in formation and customizable sprite animations with transparency.
+This is a TypeScript mouse follower animation library. It creates animated sprites that smoothly follow the mouse cursor or other targets using physics-based movement. The library supports multiple followers in formation and customizable sprite animations with transparency.
 
-### Core Components
+### Core Components (Library Package)
 
-**Main Follower System** (`src/follower.ts`)
+**Main Follower System** (`packages/mouse-follower/src/follower.ts`)
 - Factory function `follower(options)` returns Follower instances
 - Manages animation loop with `requestAnimationFrame`
 - Handles DOM element creation and positioning
 - Supports mouse tracking, target following, and formation behavior
 
-**Physics Engine** (`src/follower/physics.ts`)
+**Physics Engine** (`packages/mouse-follower/src/follower/physics.ts`)
 - Calculates smooth acceleration-based movement toward targets
 - Implements velocity limiting and stop-within-distance behavior
 - Pure functions for position/velocity calculations using delta time
 - Vector math utilities for direction and distance calculations
 
-**Sprite System** (`src/follower/sprite.ts`)
+**Sprite System** (`packages/mouse-follower/src/follower/sprite.ts`)
 - Canvas-based sprite rendering with frame animation
 - Supports sprite sheets with configurable frame counts
 - Implements color-key transparency (green screen masking)
 - Handles sprite loading, processing, and rendering
 
-**Type Definitions** (`src/follower/types.ts`)
+**Type Definitions** (`packages/mouse-follower/src/follower/types.ts`)
 - Core interfaces: `Follower`, `FollowerOptions`, `Position`, `FollowTarget`
 - Animation system types: `AnimationConfig`, `AnimationsConfig`
 - Event types: `FollowerStartEvent`, `FollowerStopEvent`
 - Sprite preset constants: `SPRITE_PRESET_STACK_CHAN`
 - Default configuration values for physics and sprite parameters
+
+**Library Entry Point** (`packages/mouse-follower/src/index.ts`)
+- Exports all public APIs and types
+- Re-exports physics utilities for advanced users
 
 ### Key Technical Details
 
@@ -72,7 +90,7 @@ This is a TypeScript mouse follower animation library built with Vite. It create
 
 ## Testing Setup
 
-Uses Vitest with jsdom environment for DOM testing. Key test patterns:
+The library (`packages/mouse-follower/`) uses Vitest with jsdom environment for DOM testing. Key test patterns:
 - Canvas API is mocked with `vi.fn()` for all 2D context methods
 - Image loading is mocked with custom Image constructor
 - Timer mocking with `vi.useFakeTimers()` for animation testing
@@ -82,8 +100,15 @@ Each module has corresponding `.test.ts` files testing core functionality in iso
 
 ## Demo Application
 
-The `src/main.ts` demonstrates various follower configurations:
+The demo package (`packages/demo/`) demonstrates various follower configurations:
+- Uses the published library package: `@meganetaaan/mouse-follower`
 - Single follower following mouse using `mouseTarget()` with Stack-chan sprite preset
 - Formation of multiple followers in chain using `offsetTarget()`
 - Event-driven animation system (action on stop, walk on start)
 - Canvas-based sprite rendering with transparency
+- Deployed to GitHub Pages for public access
+
+### Demo Development
+- `packages/demo/src/main.ts` - Main demo application entry point
+- `packages/demo/public/` - Static assets for demo
+- Builds to `dist-demo/` for GitHub Pages deployment
