@@ -44,21 +44,31 @@ This is a TypeScript mouse follower animation library built with Vite. It create
 ### Key Technical Details
 
 **Follow Target System**: Followers can follow:
-- `"mouse"` - Tracks cursor position via global mouse events
-- `Position` object - Static or dynamic coordinate target
+- `mouseTarget()` - Returns a MouseTarget instance that tracks cursor position via global mouse events
+- `FollowTarget` object - Any object with `x` and `y` properties (static or dynamic)
 - Another `Follower` instance - Creates formation chains
+- `offsetTarget(target, offsetX, offsetY)` - Creates a target with offset from another target
 
-**Physics Configuration**:
-- `maxVelocity` - Maximum movement speed (px/s)
-- `maxAccel` - Acceleration rate toward target (px/s²)
-- `stopWithin` - Distance threshold to stop movement (px)
+**Physics Configuration** (via `physics` option):
+- `velocity` - Maximum movement speed (px/s, default: 400)
+- `accel` - Acceleration rate toward target (px/s², default: 2000)
+- `braking`:
+  - `stopDistance` - Distance threshold to stop movement (px, default: 30)
+  - `distance` - Distance to start braking (px, default: 200)
+  - `strength` - Braking strength multiplier (default: 8.0)
+  - `minVelocity` - Minimum velocity before stopping (px/s, default: 50)
 
-**Sprite Animation**:
+**Sprite Animation** (via `sprite` option):
 - Supports horizontal sprite sheets (frames laid out left-to-right)
 - Canvas-based rendering with transparency masking support
-- Multiple animation configurations (walk, action, etc.)
+- Configuration options:
+  - `url` - Sprite sheet image URL
+  - `width`/`height` - Sprite dimensions in pixels
+  - `frames` - Number of frames in sprite sheet
+  - `transparentColor` - Color for transparency masking (default: 'rgb(0, 255, 0)')
+  - `animations` - Named animation configurations with frame positions
 - Event-driven animation control via start/stop events
-- Default sprite: Stack-chan 32x32px with 4 frames
+- Default preset: `SPRITE_PRESET_STACK_CHAN` (32x32px with walk and action animations)
 
 ## Testing Setup
 
@@ -73,7 +83,7 @@ Each module has corresponding `.test.ts` files testing core functionality in iso
 ## Demo Application
 
 The `src/main.ts` demonstrates various follower configurations:
-- Single follower following mouse with Stack-chan sprite
-- Formation of multiple followers in chain
+- Single follower following mouse using `mouseTarget()` with Stack-chan sprite preset
+- Formation of multiple followers in chain using `offsetTarget()`
 - Event-driven animation system (action on stop, walk on start)
 - Canvas-based sprite rendering with transparency

@@ -1,5 +1,5 @@
 {
-	"name": "mouse-follower",
+	"name": "@meganetaaan/mouse-follower",
 	"private": false,
 	"version": "1.0.0",
 	"description": "TypeScript library for creating animated sprites that smoothly follow mouse cursor or other targets using physics-based movement",
@@ -38,8 +38,11 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.1.3",
+		"@semantic-release/changelog": "^6.0.3",
+		"@semantic-release/git": "^10.0.1",
 		"@vitest/ui": "^3.2.4",
 		"jsdom": "^26.1.0",
+		"semantic-release": "^23.0.0",
 		"typescript": "~5.8.3",
 		"vite": "^7.0.4",
 		"vitest": "^3.2.4"
