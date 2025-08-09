@@ -50,6 +50,7 @@ jobs:
       run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
     - name: Semantic Release
+      working-directory: packages/mouse-follower
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -61,7 +62,7 @@ jobs:
       with:
         name: release-artifacts
         path: |
-          dist/
-          package.json
+          packages/mouse-follower/dist/
+          packages/mouse-follower/package.json
           CHANGELOG.md
         retention-days: 30

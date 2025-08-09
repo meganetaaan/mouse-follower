@@ -48,15 +48,14 @@ jobs:
     - name: Run tests
       run: pnpm run test
 
+    - name: Build library
+      run: pnpm run build:lib
+
     - name: Build demo
       run: pnpm run build:demo
       env:
         NODE_ENV: production
         GITHUB_PAGES: true
-
-    - name: Build library
-      if: matrix.node-version == 20
-      run: pnpm run build:lib
 
     - name: Upload demo artifacts
       if: matrix.node-version == 20
@@ -72,10 +71,10 @@ jobs:
       with:
         name: library-artifacts
         path: |
-          dist/*.js
-          dist/*.js.map
-          dist/*.d.ts
-          dist/*.d.ts.map
+          packages/mouse-follower/dist/*.js
+          packages/mouse-follower/dist/*.js.map
+          packages/mouse-follower/dist/*.d.ts
+          packages/mouse-follower/dist/*.d.ts.map
         retention-days: 7
 
     - name: Upload GitHub Pages artifact
