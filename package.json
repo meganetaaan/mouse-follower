@@ -15,13 +15,13 @@
 	},
 	"type": "module",
 	"scripts": {
-		"dev": "pnpm --filter demo dev",
-		"build": "pnpm --filter mouse-follower build && pnpm --filter demo build",
-		"build:lib": "pnpm --filter mouse-follower build",
-		"build:demo": "NODE_ENV=production GITHUB_PAGES=true pnpm --filter demo build",
-		"test": "pnpm --filter mouse-follower test",
+		"dev": "pnpm --filter mouse-follower-demo dev",
+		"build": "pnpm --filter @meganetaaan/mouse-follower build && pnpm --filter mouse-follower-demo build",
+		"build:lib": "pnpm --filter @meganetaaan/mouse-follower build",
+		"build:demo": "NODE_ENV=production GITHUB_PAGES=true pnpm --filter mouse-follower-demo build",
+		"test": "pnpm --filter @meganetaaan/mouse-follower test",
 		"check:fix": "biome check --fix",
-		"publish:lib": "pnpm --filter mouse-follower publish"
+		"publish:lib": "pnpm --filter @meganetaaan/mouse-follower publish"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.1.3",

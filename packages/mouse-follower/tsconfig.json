@@ -1,5 +1,5 @@
 {
-	"extends": "./tsconfig.json",
+	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"noEmit": false,
 		"emitDeclarationOnly": true,
@@ -9,5 +9,5 @@
 		"types": ["vite/client"]
 	},
 	"include": ["src/index.ts", "src/follower/**/*.ts", "src/vite-env.d.ts"],
-	"exclude": ["**/*.test.ts", "src/main.ts", "src/counter.ts"]
+	"exclude": ["**/*.test.ts"]
 }
