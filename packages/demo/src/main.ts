@@ -6,7 +6,7 @@ import {
 	mouseTarget,
 	offsetTarget,
 	SPRITE_PRESET_STACK_CHAN,
-} from "./follower";
+} from "@meganetaaan/mouse-follower";
 
 const appElement = document.querySelector<HTMLDivElement>("#app");
 if (appElement) {
