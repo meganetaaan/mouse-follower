@@ -395,9 +395,19 @@ export function offsetTarget(
 	return new OffsetTarget(target, offsetX, offsetY);
 }
 
-// Export sprite presets and types
+// Export all necessary types and presets
 export {
+	type AnimationConfig,
+	type AnimationsConfig,
+	type FollowerOptions,
 	type FollowerStartEvent,
 	type FollowerStopEvent,
+	type FollowTarget,
+	type PhysicsOptions,
+	type Position,
 	SPRITE_PRESET_STACK_CHAN,
+	type SpriteOptions,
 } from "./follower/types";
+
+// Export the interface as type alias
+export type Follower = IFollower;

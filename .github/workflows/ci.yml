@@ -2,9 +2,18 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   test:
@@ -13,7 +22,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [20, 22]
 
     steps:
     - name: Checkout code
@@ -34,13 +43,53 @@ jobs:
     - name: Run tests
       run: npm test
 
-    - name: Build project
-      run: npm run build
+    - name: Build demo
+      run: npm run build:demo
+      env:
+        NODE_ENV: production
+        GITHUB_PAGES: true
 
-    - name: Upload build artifacts
+    - name: Build library
+      if: matrix.node-version == 20
+      run: npm run build:lib
+
+    - name: Upload demo artifacts
       if: matrix.node-version == 20
       uses: actions/upload-artifact@v4
       with:
-        name: build-artifacts
-        path: dist/
+        name: demo-artifacts
+        path: dist-demo/
         retention-days: 7
+
+    - name: Upload library artifacts
+      if: matrix.node-version == 20
+      uses: actions/upload-artifact@v4
+      with:
+        name: library-artifacts
+        path: |
+          dist/*.js
+          dist/*.js.map
+          dist/*.d.ts
+          dist/*.d.ts.map
+        retention-days: 7
+
+    - name: Upload GitHub Pages artifact
+      if: matrix.node-version == 20 && github.ref == 'refs/heads/develop' && github.event_name == 'push'
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: dist-demo/
+
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
