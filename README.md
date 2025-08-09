@@ -2,6 +2,8 @@
 
 A TypeScript library for creating animated sprites that smoothly follow the mouse cursor using physics-based movement.
 
+![Mouse Follower Demo](docs/assets/mouse-follower.gif)
+
 ## Features
 
 - 🎯 Smooth physics-based following animation
