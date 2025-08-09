@@ -21,6 +21,6 @@ export default defineConfig({
     // Generate sourcemaps for better debugging
     sourcemap: true,
     // Clean dist before build
-    emptyOutDir: false // Keep demo build files
+    emptyOutDir: true // Clean dist for library build
   }
 })
