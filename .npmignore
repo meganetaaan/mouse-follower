@@ -1,0 +1,46 @@
+# Source files
+src/
+*.ts
+!dist/**/*.d.ts
+
+# Config files
+vite.config.ts
+vite.config.lib.ts
+vitest.config.ts
+tsconfig.json
+tsconfig.lib.json
+biome.json
+
+# Development files
+node_modules/
+*.log
+.DS_Store
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+
+# Documentation
+docs/
+CONTRIBUTING.md
+CLAUDE.md
+
+# Demo files
+dist-demo/
+index.html
+public/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# CI/CD
+.github/
+
+# Misc
+*.sw?
+*.local

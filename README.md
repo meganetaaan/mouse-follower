@@ -34,7 +34,7 @@ const myFollower = follower({
 });
 
 // Start following
-myFollower.start();
+await myFollower.start();
 ```
 
 ## API Reference
