@@ -4,6 +4,8 @@ on:
   push:
     branches: [ main ]
 
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
 permissions:
   contents: write
   issues: write
@@ -18,9 +20,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # Semantic release needs full history
-        persist-credentials: false # Use GITHUB_TOKEN for release
 
     - name: Setup pnpm
       uses: pnpm/action-setup@v2
@@ -43,26 +42,11 @@ jobs:
     - name: Run linting
       run: pnpm run check:fix
 
-    - name: Build library
-      run: pnpm run build:lib
-
-    - name: Configure npm authentication
-      run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-    - name: Semantic Release
-      working-directory: packages/mouse-follower
+    - name: Create Release Pull Request or Publish
+      uses: changesets/action@v1
+      with:
+        publish: pnpm release
+        version: pnpm version-packages
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      run: npx semantic-release
-
-    - name: Upload release artifacts
-      if: steps.semantic-release.outputs.new-release-published == 'true'
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-artifacts
-        path: |
-          packages/mouse-follower/dist/
-          packages/mouse-follower/package.json
-          CHANGELOG.md
-        retention-days: 30
