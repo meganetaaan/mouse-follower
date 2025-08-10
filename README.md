@@ -47,7 +47,8 @@ This project uses pnpm workspace for package management.
 # Install dependencies for all packages
 pnpm install
 
-# Start the demo development server
+# Start development servers (library watch + demo dev)
+# This runs both TypeScript watch for the library and Vite dev server for the demo in parallel
 pnpm dev
 
 # Run tests for the library
@@ -86,21 +87,30 @@ pnpm check:fix
 
 ### Development Workflow
 
+#### Starting Development
+
+```bash
+# From root directory - starts both library (TypeScript watch) and demo (Vite) in parallel
+pnpm dev
+
+# The library will automatically rebuild on changes
+# The demo will hot-reload with the latest library changes
+```
+
 #### Working on the Library
 
 ```bash
 cd packages/mouse-follower
-pnpm test          # Run tests in watch mode
-pnpm build         # Build the library
+pnpm dev           # Run TypeScript in watch mode
+pnpm test          # Run tests once
+pnpm build         # Build the library for production
 ```
 
-#### Working on the Demo
+#### Working on the Demo Only
 
 ```bash
-pnpm dev           # Start Vite dev server from root
-# or
 cd packages/demo
-pnpm dev           # Start from demo package
+pnpm dev           # Start Vite dev server (requires library to be built)
 ```
 
 #### Publishing

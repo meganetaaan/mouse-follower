@@ -15,7 +15,7 @@
 	},
 	"type": "module",
 	"scripts": {
-		"dev": "pnpm --filter mouse-follower-demo dev",
+		"dev": "pnpm --parallel dev",
 		"build": "pnpm --filter @meganetaaan/mouse-follower build && pnpm --filter mouse-follower-demo build",
 		"build:lib": "pnpm --filter @meganetaaan/mouse-follower build",
 		"build:demo": "NODE_ENV=production GITHUB_PAGES=true pnpm --filter mouse-follower-demo build",

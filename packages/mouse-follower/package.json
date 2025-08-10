@@ -43,6 +43,7 @@
 	],
 	"scripts": {
 		"build": "tsc && cp -r assets dist/",
+		"dev": "tsc --watch",
 		"test": "vitest run",
 		"check:fix": "biome check --fix",
 		"prepublishOnly": "pnpm run test && pnpm run build"
