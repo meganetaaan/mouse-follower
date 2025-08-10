@@ -1,242 +1,149 @@
-# Mouse Follower
+# Mouse Follower Monorepo
 
-[![CI](https://github.com/meganetaaan/mouse-follower/workflows/CI/badge.svg)](https://github.com/meganetaaan/mouse-follower/actions/workflows/ci.yml) [![npm version](https://badge.fury.io/js/%40meganetaaan%2Fmouse-follower.svg)](https://www.npmjs.com/package/@meganetaaan/mouse-follower) [![npm downloads](https://img.shields.io/npm/dm/@meganetaaan/mouse-follower.svg)](https://www.npmjs.com/package/@meganetaaan/mouse-follower) [![Node.js Version](https://img.shields.io/node/v/@meganetaaan/mouse-follower.svg)](https://nodejs.org/) [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/meganetaaan/mouse-follower/workflows/CI/badge.svg)](https://github.com/meganetaaan/mouse-follower/actions/workflows/ci.yml) [![npm version](https://badge.fury.io/js/%40meganetaaan%2Fmouse-follower.svg)](https://www.npmjs.com/package/@meganetaaan/mouse-follower) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A TypeScript library for creating animated sprites that smoothly follow the mouse cursor using physics-based movement.
+A monorepo for the mouse-follower library and its demo application.
 
 ## 🚀 [Live Demo](https://meganetaaan.github.io/mouse-follower/)
 
-Try the interactive demo to see the library in action!
+## Packages
 
-![Mouse Follower Demo](docs/assets/mouse-follower.gif)
+This monorepo contains the following packages:
 
-## Features
+### [@meganetaaan/mouse-follower](./packages/mouse-follower)
+
+The main library for creating animated sprites that smoothly follow the mouse cursor using physics-based movement.
 
 - 🎯 Smooth physics-based following animation
 - 🎨 Canvas-based sprite rendering with transparency support
 - 🔗 Chain multiple followers in formation
 - ⚡ High-performance animation with requestAnimationFrame
-- 🎮 Customizable physics parameters (velocity, acceleration)
+- 🎮 Customizable physics parameters
 - 📱 Works on both desktop and mobile devices
 
-## Quick Start
+[View package README →](./packages/mouse-follower/README.md)
 
-### CDN (Direct Import)
+### [Demo Application](./packages/demo)
 
-```html
-<script type="module">
-  import { follower } from 'https://cdn.jsdelivr.net/npm/@meganetaaan/mouse-follower/dist/index.js';
+An interactive demo application showcasing the library's capabilities.
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    await follower().start();
-  })
-</script>
-```
-
-### NPM Installation
-
-```bash
-npm install @meganetaaan/mouse-follower
-```
-
-```typescript
-import { follower } from '@meganetaaan/mouse-follower';
-
-// Create a follower with default settings
-const myFollower = follower();
-
-// Start following
-await myFollower.start();
-```
-
-## API Reference
-
-### `follower(options?: FollowerOptions): Follower`
-
-Creates a new follower instance.
-
-#### Options
-
-- `target` - Target to follow: `FollowTarget` object with `{x, y}` properties, `mouseTarget()`, or another `Follower`
-- `bindTo` - HTML element to attach the follower to (default: `document.body`)
-- `sprite` - Sprite configuration:
-  - `url` - Path to sprite sheet image
-  - `width` - Sprite width in pixels
-  - `height` - Sprite height in pixels
-  - `frames` - Number of frames in sprite sheet
-  - `transparentColor` - Color to treat as transparent (default: `'rgb(0, 255, 0)'`)
-  - `animation` - Animation settings with `interval` in ms
-  - `animations` - Named animation configurations
-- `physics` - Physics configuration:
-  - `velocity` - Maximum movement speed in px/s (default: 400)
-  - `accel` - Maximum acceleration in px/s² (default: 2000)
-  - `braking` - Braking behavior:
-    - `stopDistance` - Stop distance threshold in pixels (default: 30)
-    - `distance` - Distance to start braking (default: 200)
-    - `strength` - Braking strength multiplier (default: 8.0)
-    - `minVelocity` - Minimum velocity before stopping (default: 50)
-
-#### Methods
-
-- `start()` - Start following animation
-- `stop()` - Stop following animation
-- `setTarget(target: FollowTarget)` - Change follow target
-- `destroy()` - Remove follower and clean up
-- `playAnimation(name: string)` - Play a named animation
-- `pauseAnimation()` - Pause current animation
-- `addEventListener(type, listener)` - Add event listener for 'start' or 'stop' events
-- `removeEventListener(type, listener)` - Remove event listener
-
-#### Properties
-
-- `x` - Current x position
-- `y` - Current y position
-
-### Helper Functions
-
-#### `mouseTarget(): MouseTarget`
-
-Returns a singleton target that tracks mouse position.
-
-#### `offsetTarget(target: FollowTarget, offsetX: number, offsetY: number): OffsetTarget`
-
-Creates a target with an offset from another target.
-
-## Examples
-
-### Basic Mouse Follower
-
-```typescript
-import { follower } from '@meganetaaan/mouse-follower';
-
-const myFollower = follower();
-
-await myFollower.start();
-```
-
-### With Custom Sprite
-
-```typescript
-import { follower } from '@meganetaaan/mouse-follower';
-
-// Create a follower with custom sprite
-const myFollower = follower({
-  sprite: {
-    url: '/path/to/sprite.png',
-    width: 32,
-    height: 32,
-    frames: 4
-  }
-});
-
-await myFollower.start();
-```
-
-### Follower Chain
-
-```typescript
-import { follower, mouseTarget, offsetTarget } from '@meganetaaan/mouse-follower';
-
-// First follower follows mouse
-const leader = follower({
-  target: mouseTarget(),
-});
-
-// Second follower follows the first with offset
-const follower2 = follower({
-  target: offsetTarget(leader, -40, 0),
-});
-
-await leader.start();
-await follower2.start();
-```
-
-### Custom Animation Events
-
-```typescript
-const animatedFollower = follower({
-  sprite: {
-    url: './sprites/animated.png',
-    width: 32,
-    height: 64,
-    animations: {
-      walk: { start: [0, 0], numFrames: 4, repeat: true },
-      action: { start: [0, 32], numFrames: 4, repeat: false }
-    }
-  }
-});
-
-// Play different animations based on movement
-animatedFollower.addEventListener('start', (e) => {
-  e.detail.follower.playAnimation('walk');
-});
-
-animatedFollower.addEventListener('stop', (e) => {
-  e.detail.follower.playAnimation('action');
-});
-
-await animatedFollower.start();
-```
+- Multiple follower examples
+- Formation demonstrations
+- Event-driven animations
+- Stack-chan sprite integration
 
 ## Development
 
-This project uses a pnpm workspace structure with separate library and demo packages.
+This project uses pnpm workspace for package management.
 
-### Workspace Structure
+### Prerequisites
 
-```
-packages/
-├── mouse-follower/    # Main library (@meganetaaan/mouse-follower)
-└── demo/             # Demo application (private package)
-```
+- Node.js 18+
+- pnpm 8+
 
-### Development Commands
+### Getting Started
 
 ```bash
-# Install dependencies for entire workspace
+# Install dependencies for all packages
 pnpm install
 
-# Start demo development server
+# Start the demo development server
 pnpm dev
 
-# Run library tests
+# Run tests for the library
 pnpm test
+
+# Build all packages
+pnpm build
 
 # Build library only
 pnpm build:lib
 
-# Build both library and demo
-pnpm build
+# Build demo only
+pnpm build:demo
 
 # Lint and format all packages
 pnpm check:fix
+```
 
-# Publish library to npm
+### Workspace Structure
+
+```
+.
+├── packages/
+│   ├── mouse-follower/    # Main library (@meganetaaan/mouse-follower)
+│   │   ├── src/          # Library source code
+│   │   ├── test/         # Library tests
+│   │   └── README.md     # Library documentation
+│   └── demo/             # Demo application (private)
+│       ├── src/          # Demo source code
+│       └── public/       # Demo static assets
+├── docs/                 # Project documentation
+├── CLAUDE.md            # AI assistant instructions
+├── CONTRIBUTING.md      # Contribution guidelines
+└── README.md           # This file
+```
+
+### Development Workflow
+
+#### Working on the Library
+
+```bash
+cd packages/mouse-follower
+pnpm test          # Run tests in watch mode
+pnpm build         # Build the library
+```
+
+#### Working on the Demo
+
+```bash
+pnpm dev           # Start Vite dev server from root
+# or
+cd packages/demo
+pnpm dev           # Start from demo package
+```
+
+#### Publishing
+
+The library package is published to npm. To publish a new version:
+
+```bash
+# Build and test
+pnpm build:lib
+pnpm test
+
+# Publish (from root)
 pnpm publish:lib
 ```
 
-### Library Development
+### Testing
 
-To work on the library itself:
+The library uses Vitest with jsdom for testing:
+
+- Unit tests for physics calculations
+- DOM manipulation tests
+- Animation system tests
+- Sprite rendering tests
+
+Run tests with:
 
 ```bash
-# Navigate to library package
-cd packages/mouse-follower
-
-# Run tests in watch mode
-pnpm test
-
-# Build library
-pnpm build
+pnpm test              # Run once
+pnpm test --watch      # Watch mode
+pnpm test --coverage   # Coverage report
 ```
 
-## Browser Support
+## Contributing
 
-- Chrome/Edge 88+
-- Firefox 78+
-- Safari 14+
-- Mobile browsers with touch support
+Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+## Links
+
+- [NPM Package](https://www.npmjs.com/package/@meganetaaan/mouse-follower)
+- [GitHub Repository](https://github.com/meganetaaan/mouse-follower)
+- [Live Demo](https://meganetaaan.github.io/mouse-follower/)
+- [Bug Reports](https://github.com/meganetaaan/mouse-follower/issues)
