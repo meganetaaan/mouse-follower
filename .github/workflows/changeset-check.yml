@@ -1,0 +1,137 @@
+name: Changeset Check
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changeset-check:
+    name: Check for changesets
+    runs-on: ubuntu-latest
+    if: github.head_ref != 'changeset-release/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install
+
+    - name: Check for changesets
+      id: changeset-check
+      run: |
+        if pnpm changeset status --since=origin/main > /dev/null 2>&1; then
+          echo "has-changesets=true" >> $GITHUB_OUTPUT
+          echo "✅ Changesets found"
+        else
+          echo "has-changesets=false" >> $GITHUB_OUTPUT
+          echo "❌ No changesets found"
+        fi
+
+    - name: Create changeset comment
+      if: steps.changeset-check.outputs.has-changesets == 'false'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const comment = `## 📦 Changeset Required
+
+          This PR doesn't include a changeset. If this change should trigger a release, please add a changeset:
+
+          \`\`\`bash
+          pnpm changeset
+          \`\`\`
+
+          ### When to add a changeset:
+          - ✅ Bug fixes (patch)
+          - ✅ New features (minor) 
+          - ✅ Breaking changes (major)
+          - ✅ Documentation updates that affect users
+
+          ### When you don't need a changeset:
+          - ❌ Internal refactoring without user impact
+          - ❌ Test updates
+          - ❌ CI/build configuration changes
+          - ❌ Development dependency updates
+
+          If this change doesn't need a release, you can add an empty changeset:
+          \`\`\`bash
+          pnpm changeset --empty
+          \`\`\`
+
+          ---
+          <sub>This comment will be automatically updated when changesets are added.</sub>`;
+
+          // Get existing comments
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          // Find existing changeset comment
+          const existingComment = comments.find(c => 
+            c.user?.login === 'github-actions[bot]' && 
+            c.body.includes('📦 Changeset Required')
+          );
+
+          if (existingComment) {
+            // Update existing comment
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: comment
+            });
+          } else {
+            // Create new comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+          }
+
+    - name: Remove changeset comment if changesets exist
+      if: steps.changeset-check.outputs.has-changesets == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          // Get existing comments
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          // Find existing changeset comment
+          const existingComment = comments.find(c => 
+            c.user?.login === 'github-actions[bot]' && 
+            c.body.includes('📦 Changeset Required')
+          );
+
+          if (existingComment) {
+            await github.rest.issues.deleteComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id
+            });
+          }
