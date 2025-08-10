@@ -25,4 +25,5 @@ export {
 	SPRITE_PRESET_STACK_CHAN,
 	// Sprite System
 	type SpriteOptions,
+	stackChanPreset,
 } from "./follower.js";

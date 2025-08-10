@@ -140,29 +140,33 @@ export const DEFAULT_ANIMATIONS: AnimationsConfig = {
 };
 
 // Sprite presets
-export const SPRITE_PRESET_STACK_CHAN: SpriteOptions = {
-	url: new URL("../../assets/stack-chan.png", import.meta.url).href,
-	width: 32,
-	height: 32,
-	frames: 4,
-	transparentColor: "rgb(0, 255, 0)",
-	animation: {
-		interval: 125,
-	},
-	animations: {
-		walk: {
-			start: [0, 0],
-			numFrames: 4,
-			repeat: true,
-			interval: 100,
+export function stackChanPreset(): SpriteOptions {
+	return {
+		url: new URL("../../assets/stack-chan.png", import.meta.url).href,
+		width: 32,
+		height: 32,
+		frames: 4,
+		transparentColor: "rgb(0, 255, 0)",
+		animation: {
+			interval: 125,
 		},
-		action: {
-			start: [0, 32], // Temporarily using same animation as walk
-			numFrames: 4,
-			repeat: false,
+		animations: {
+			walk: {
+				start: [0, 0],
+				numFrames: 4,
+				repeat: true,
+				interval: 100,
+			},
+			action: {
+				start: [0, 32], // Temporarily using same animation as walk
+				numFrames: 4,
+				repeat: false,
+			},
 		},
-	},
-};
+	};
+}
+
+export const SPRITE_PRESET_STACK_CHAN: SpriteOptions = stackChanPreset();
 
 export const DEFAULTS = {
 	physics: {
@@ -175,5 +179,5 @@ export const DEFAULTS = {
 			minVelocity: 50.0,
 		},
 	},
-	sprite: SPRITE_PRESET_STACK_CHAN,
+	sprite: stackChanPreset(),
 };

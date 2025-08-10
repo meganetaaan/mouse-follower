@@ -5,7 +5,6 @@ import {
 	follower,
 	mouseTarget,
 	offsetTarget,
-	SPRITE_PRESET_STACK_CHAN,
 } from "@meganetaaan/mouse-follower";
 
 const appElement = document.querySelector<HTMLDivElement>("#app");
@@ -17,10 +16,6 @@ if (appElement) {
 			<p>The exterior, board data, and software are fully open source. Detailed assembly instructions are available, so anyone can make one.</p>
       
       <div style="margin-top: 2rem;">
-        <label for="sprite-select">Sprite: </label>
-        <select id="sprite-select">
-          <option value="stack-chan">Stack-chan</option>
-        </select>
         <button id="add">Add</button>
         <button id="clear">Clear</button>
       </div>
@@ -35,16 +30,13 @@ if (appElement) {
 const followers: ReturnType<typeof follower>[] = [];
 
 document.getElementById("add")?.addEventListener("click", async (event) => {
-	// Use stack-chan sprite preset
-	const spritePreset = SPRITE_PRESET_STACK_CHAN;
-
 	// First follower follows mouse, subsequent ones follow the previous follower with offset
 	const target =
 		followers.length === 0
 			? mouseTarget()
 			: offsetTarget(followers[followers.length - 1], -40, 0);
 
-	const s = follower({ target, sprite: spritePreset });
+	const s = follower({ target });
 
 	// Add event listeners for movement state changes
 	// Option A: Play action animation when stopped
