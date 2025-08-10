@@ -1,6 +1,12 @@
 # Mouse Follower
 
+[![CI](https://github.com/meganetaaan/mouse-follower/workflows/CI/badge.svg)](https://github.com/meganetaaan/mouse-follower/actions/workflows/ci.yml) [![npm version](https://badge.fury.io/js/%40meganetaaan%2Fmouse-follower.svg)](https://www.npmjs.com/package/@meganetaaan/mouse-follower) [![npm downloads](https://img.shields.io/npm/dm/@meganetaaan/mouse-follower.svg)](https://www.npmjs.com/package/@meganetaaan/mouse-follower) [![Node.js Version](https://img.shields.io/node/v/@meganetaaan/mouse-follower.svg)](https://nodejs.org/) [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A TypeScript library for creating animated sprites that smoothly follow the mouse cursor using physics-based movement.
+
+## 🚀 [Live Demo](https://meganetaaan.github.io/mouse-follower/)
+
+Try the interactive demo to see the library in action!
 
 ![Mouse Follower Demo](docs/assets/mouse-follower.gif)
 
@@ -13,27 +19,31 @@ A TypeScript library for creating animated sprites that smoothly follow the mous
 - 🎮 Customizable physics parameters (velocity, acceleration)
 - 📱 Works on both desktop and mobile devices
 
-## Installation
+## Quick Start
+
+### CDN (Direct Import)
+
+```html
+<script type="module">
+  import { follower } from 'https://cdn.jsdelivr.net/npm/@meganetaaan/mouse-follower/dist/index.js';
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    await follower().start();
+  })
+</script>
+```
+
+### NPM Installation
 
 ```bash
 npm install @meganetaaan/mouse-follower
 ```
 
-## Quick Start
-
 ```typescript
-import { follower, mouseTarget } from '@meganetaaan/mouse-follower';
+import { follower } from '@meganetaaan/mouse-follower';
 
-// Create a follower that tracks the mouse
-const myFollower = follower({
-  target: mouseTarget(),
-  sprite: {
-    url: '/path/to/sprite.png',
-    width: 32,
-    height: 32,
-    frames: 4
-  }
-});
+// Create a follower with default settings
+const myFollower = follower();
 
 // Start following
 await myFollower.start();
@@ -97,19 +107,29 @@ Creates a target with an offset from another target.
 ### Basic Mouse Follower
 
 ```typescript
-import { follower, mouseTarget } from '@meganetaaan/mouse-follower';
+import { follower } from '@meganetaaan/mouse-follower';
 
-const follower1 = follower({
-  target: mouseTarget(),
+const myFollower = follower();
+
+await myFollower.start();
+```
+
+### With Custom Sprite
+
+```typescript
+import { follower } from '@meganetaaan/mouse-follower';
+
+// Create a follower with custom sprite
+const myFollower = follower({
   sprite: {
-    url: './sprites/character.png',
+    url: '/path/to/sprite.png',
     width: 32,
     height: 32,
     frames: 4
   }
 });
 
-await follower1.start();
+await myFollower.start();
 ```
 
 ### Follower Chain
@@ -120,13 +140,11 @@ import { follower, mouseTarget, offsetTarget } from '@meganetaaan/mouse-follower
 // First follower follows mouse
 const leader = follower({
   target: mouseTarget(),
-  sprite: { url: './sprites/leader.png', width: 32, height: 32 }
 });
 
 // Second follower follows the first with offset
 const follower2 = follower({
   target: offsetTarget(leader, -40, 0),
-  sprite: { url: './sprites/follower.png', width: 32, height: 32 }
 });
 
 await leader.start();
@@ -137,7 +155,6 @@ await follower2.start();
 
 ```typescript
 const animatedFollower = follower({
-  target: mouseTarget(),
   sprite: {
     url: './sprites/animated.png',
     width: 32,
@@ -161,36 +178,56 @@ animatedFollower.addEventListener('stop', (e) => {
 await animatedFollower.start();
 ```
 
-### Using the Stack-chan Preset
-
-```typescript
-import { follower, mouseTarget, SPRITE_PRESET_STACK_CHAN } from '@meganetaaan/mouse-follower';
-
-const stackChan = follower({
-  target: mouseTarget(),
-  sprite: SPRITE_PRESET_STACK_CHAN
-});
-
-await stackChan.start();
-```
-
 ## Development
 
+This project uses a pnpm workspace structure with separate library and demo packages.
+
+### Workspace Structure
+
+```
+packages/
+├── mouse-follower/    # Main library (@meganetaaan/mouse-follower)
+└── demo/             # Demo application (private package)
+```
+
+### Development Commands
+
 ```bash
-# Install dependencies
-npm install
+# Install dependencies for entire workspace
+pnpm install
 
-# Start development server
-npm run dev
+# Start demo development server
+pnpm dev
 
-# Run tests
-npm test
+# Run library tests
+pnpm test
 
-# Build for production
-npm run build
+# Build library only
+pnpm build:lib
 
-# Lint and format
-npm run check:fix
+# Build both library and demo
+pnpm build
+
+# Lint and format all packages
+pnpm check:fix
+
+# Publish library to npm
+pnpm publish:lib
+```
+
+### Library Development
+
+To work on the library itself:
+
+```bash
+# Navigate to library package
+cd packages/mouse-follower
+
+# Run tests in watch mode
+pnpm test
+
+# Build library
+pnpm build
 ```
 
 ## Browser Support
