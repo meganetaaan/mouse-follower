@@ -1,5 +1,11 @@
 # @meganetaaan/mouse-follower
 
+## 1.1.0
+
+### Minor Changes
+
+- [#10](https://github.com/meganetaaan/mouse-follower/pull/10) [`82f3dbb`](https://github.com/meganetaaan/mouse-follower/commit/82f3dbb1965e55f027e3a38b74c133c052e8dfda) Thanks [@meganetaaan](https://github.com/meganetaaan)! - dynamically decide where to load the Stack-chan sprite image
+
 ## 1.0.1
 
 ### Patch Changes
