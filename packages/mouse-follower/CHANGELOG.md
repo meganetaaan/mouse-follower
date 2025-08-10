@@ -1,5 +1,11 @@
 # @meganetaaan/mouse-follower
 
+## 1.1.1
+
+### Patch Changes
+
+- [#13](https://github.com/meganetaaan/mouse-follower/pull/13) [`2e152e6`](https://github.com/meganetaaan/mouse-follower/commit/2e152e657a50155328e32e1241d2b7076ae70b0f) Thanks [@meganetaaan](https://github.com/meganetaaan)! - Improve README
+
 ## 1.1.0
 
 ### Minor Changes
