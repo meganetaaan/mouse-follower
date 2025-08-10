@@ -411,6 +411,7 @@ export {
 	type Position,
 	SPRITE_PRESET_STACK_CHAN,
 	type SpriteOptions,
+	stackChanPreset,
 } from "./follower/types.js";
 
 // Export the interface as type alias
