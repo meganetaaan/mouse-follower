@@ -1,9 +1,17 @@
 {
 	"name": "@meganetaaan/mouse-follower",
 	"private": false,
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "TypeScript library for creating animated sprites that smoothly follow mouse cursor or other targets using physics-based movement",
-	"keywords": ["mouse", "follower", "sprite", "animation", "canvas", "physics", "typescript"],
+	"keywords": [
+		"mouse",
+		"follower",
+		"sprite",
+		"animation",
+		"canvas",
+		"physics",
+		"typescript"
+	],
 	"author": "meganetaaan",
 	"license": "MIT",
 	"repository": {
