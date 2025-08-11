@@ -1,12 +1,4 @@
-export interface SpriteConfig {
-	spriteUrl: string;
-	spriteWidth: number;
-	spriteHeight: number;
-	spriteFrames?: number;
-	transparentColor?: string;
-}
-
-export type SpriteDirection = "left" | "right";
+import type { ISprite, Position, SpriteConfig, SpriteDirection } from "./types.js";
 
 export interface Sprite {
 	element: HTMLDivElement;
@@ -216,5 +208,176 @@ export function updateSpriteDirection(
 	if (sprite.facingDirection !== direction) {
 		sprite.facingDirection = direction;
 		renderFrame(sprite);
+	}
+}
+
+// Additional types for SpriteRenderer class (already imported above)
+
+export class SpriteRenderer implements ISprite {
+	private config: SpriteConfig;
+	private parentElement: HTMLElement;
+	private sprite?: Sprite;
+	private currentAnimation?: string;
+	private animationFrame: number = 0;
+	private animationIntervalId?: number;
+	private isInitialized: boolean = false;
+
+	constructor(config: SpriteConfig, parentElement: HTMLElement) {
+		if (!parentElement) {
+			throw new Error("Parent element is required");
+		}
+		this.config = config;
+		this.parentElement = parentElement;
+	}
+
+	async initialize(): Promise<void> {
+		if (this.isInitialized) {
+			return;
+		}
+
+		// Create wrapper element
+		const wrapper = document.createElement("div");
+		wrapper.className = "mouse-follower";
+		wrapper.style.position = "fixed";
+		wrapper.style.left = "0";
+		wrapper.style.top = "0";
+		wrapper.style.pointerEvents = "none";
+		wrapper.style.zIndex = "9999";
+		this.parentElement.appendChild(wrapper);
+
+		try {
+			this.sprite = await createSprite(wrapper, {
+				spriteUrl: this.config.spriteUrl,
+				spriteWidth: this.config.spriteWidth,
+				spriteHeight: this.config.spriteHeight,
+				spriteFrames: this.config.spriteFrames,
+				transparentColor: this.config.transparentColor,
+				animationInterval: this.config.animationInterval,
+				animations: this.config.animations,
+			});
+
+			this.isInitialized = true;
+		} catch (error) {
+			wrapper.remove();
+			throw error;
+		}
+	}
+
+	render(position: Position, direction?: SpriteDirection): void {
+		if (!this.isInitialized || !this.sprite) {
+			return;
+		}
+
+		// Update sprite direction if provided
+		if (direction && this.sprite.facingDirection !== direction) {
+			this.sprite.facingDirection = direction;
+		}
+
+		// Render current frame
+		this.renderCurrentFrame();
+
+		// Position the wrapper
+		const wrapper = this.sprite.element.parentElement as HTMLDivElement;
+		const translateX = position.x - this.config.spriteWidth / 2;
+		const translateY = position.y - this.config.spriteHeight / 2;
+		wrapper.style.transform = `translate(${translateX}px, ${translateY}px)`;
+	}
+
+	playAnimation(name: string): void {
+		if (!this.isInitialized || !this.sprite) {
+			return;
+		}
+
+		const animation = this.config.animations[name];
+		if (!animation) {
+			return;
+		}
+
+		// Stop current animation if running
+		this.pauseAnimation();
+
+		// Set up new animation
+		this.currentAnimation = name;
+		this.animationFrame = 0;
+
+		// Render first frame immediately
+		this.renderCurrentFrame();
+
+		// If it's a single frame animation or non-repeating animation, don't start interval
+		if (animation.numFrames === 1) {
+			return;
+		}
+
+		// Set up interval for animation
+		const interval = animation.interval || this.config.animationInterval;
+		this.animationIntervalId = window.setInterval(() => {
+			if (!this.sprite || !this.currentAnimation) {
+				return;
+			}
+
+			const currentAnimationConfig =
+				this.config.animations[this.currentAnimation];
+			if (!currentAnimationConfig) {
+				return;
+			}
+
+			this.animationFrame++;
+
+			if (this.animationFrame >= currentAnimationConfig.numFrames) {
+				if (currentAnimationConfig.repeat) {
+					this.animationFrame = 0;
+				} else {
+					// Animation finished, stop interval
+					this.pauseAnimation();
+					// Keep showing last frame
+					this.animationFrame = currentAnimationConfig.numFrames - 1;
+					return;
+				}
+			}
+
+			this.renderCurrentFrame();
+		}, interval);
+	}
+
+	pauseAnimation(): void {
+		if (this.animationIntervalId) {
+			clearInterval(this.animationIntervalId);
+			this.animationIntervalId = undefined;
+		}
+	}
+
+	destroy(): void {
+		this.pauseAnimation();
+
+		if (this.sprite) {
+			const wrapper = this.sprite.element.parentElement;
+			if (wrapper) {
+				wrapper.remove();
+			}
+			this.sprite = undefined;
+		}
+
+		this.isInitialized = false;
+	}
+
+	isAnimating(): boolean {
+		return this.animationIntervalId !== undefined;
+	}
+
+	private renderCurrentFrame(): void {
+		if (!this.sprite || !this.currentAnimation) {
+			return;
+		}
+
+		const animation = this.config.animations[this.currentAnimation];
+		if (!animation) {
+			return;
+		}
+
+		const x =
+			animation.start[0] + this.animationFrame * this.config.spriteWidth;
+		const y = animation.start[1];
+
+		renderSpriteAt(this.sprite, x, y, this.sprite.facingDirection);
 	}
 }

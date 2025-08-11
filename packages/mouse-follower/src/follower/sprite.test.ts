@@ -6,19 +6,25 @@ import {
 } from "./sprite";
 
 // Mock HTML5 Canvas API
-global.HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
-	drawImage: vi.fn(),
-	clearRect: vi.fn(),
-	getImageData: vi.fn(() => ({
-		data: new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]),
-		width: 2,
-		height: 1,
-	})),
-	putImageData: vi.fn(),
-	save: vi.fn(),
-	restore: vi.fn(),
-	scale: vi.fn(),
-}));
+global.HTMLCanvasElement.prototype.getContext = vi.fn((contextId: string) => {
+	if (contextId === "2d") {
+		return {
+			drawImage: vi.fn(),
+			clearRect: vi.fn(),
+			getImageData: vi.fn(() => ({
+				data: new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255]),
+				width: 2,
+				height: 1,
+				colorSpace: "srgb" as PredefinedColorSpace,
+			})),
+			putImageData: vi.fn(),
+			save: vi.fn(),
+			restore: vi.fn(),
+			scale: vi.fn(),
+		} as unknown as CanvasRenderingContext2D;
+	}
+	return null;
+}) as any;
 
 global.HTMLCanvasElement.prototype.toDataURL = vi.fn(
 	() => "data:image/png;base64,test",
@@ -33,14 +39,17 @@ class MockImage {
 	height = 64;
 
 	constructor() {
-		// Simulate async loading
-		setTimeout(() => {
+		// Use queueMicrotask for more immediate execution
+		queueMicrotask(() => {
 			if (this.onload) this.onload();
-		}, 0);
+		});
 	}
 
 	set src(_: string) {
-		// Trigger load after src is set
+		// Trigger load immediately when src is set
+		queueMicrotask(() => {
+			if (this.onload) this.onload();
+		});
 	}
 }
 
@@ -64,6 +73,8 @@ describe("sprite", () => {
 				spriteUrl: "data:image/png;base64,test",
 				spriteWidth: 32,
 				spriteHeight: 64,
+				animationInterval: 125,
+				animations: { walk: { start: [0, 0] as [number, number], numFrames: 1, repeat: false } },
 			};
 
 			const sprite = await createSprite(element, config);
@@ -82,6 +93,8 @@ describe("sprite", () => {
 				spriteUrl: "data:image/png;base64,test",
 				spriteWidth: 32,
 				spriteHeight: 64,
+				animationInterval: 125,
+				animations: { walk: { start: [0, 0] as [number, number], numFrames: 1, repeat: false } },
 			};
 
 			await createSprite(element, config);
@@ -97,6 +110,8 @@ describe("sprite", () => {
 				spriteWidth: 32,
 				spriteHeight: 64,
 				transparentColor: "rgb(0, 255, 0)",
+				animationInterval: 125,
+				animations: { walk: { start: [0, 0] as [number, number], numFrames: 1, repeat: false } },
 			};
 
 			const sprite = await createSprite(element, config);
@@ -116,14 +131,17 @@ describe("sprite", () => {
 				height = 64;
 
 				constructor() {
-					// Simulate async error
-					setTimeout(() => {
+					// Use queueMicrotask for more immediate execution
+					queueMicrotask(() => {
 						if (this.onerror) this.onerror();
-					}, 0);
+					});
 				}
 
 				set src(_: string) {
-					// Trigger error after src is set
+					// Trigger error immediately when src is set
+					queueMicrotask(() => {
+						if (this.onerror) this.onerror();
+					});
 				}
 			}
 
@@ -134,6 +152,8 @@ describe("sprite", () => {
 				spriteUrl: "invalid-url",
 				spriteWidth: 32,
 				spriteHeight: 64,
+				animationInterval: 125,
+				animations: { walk: { start: [0, 0] as [number, number], numFrames: 1, repeat: false } },
 			};
 
 			await expect(createSprite(element, config)).rejects.toThrow();
@@ -156,7 +176,7 @@ describe("sprite", () => {
 			const sprite = {
 				element: document.createElement("div"),
 				canvas: document.createElement("canvas"),
-				context: mockContext as CanvasRenderingContext2D,
+				context: mockContext as unknown as CanvasRenderingContext2D,
 				currentFrame: 0,
 				frameCount: 2,
 				frameWidth: 32,
@@ -183,7 +203,7 @@ describe("sprite", () => {
 			const sprite = {
 				element: document.createElement("div"),
 				canvas: document.createElement("canvas"),
-				context: mockContext as CanvasRenderingContext2D,
+				context: mockContext as unknown as CanvasRenderingContext2D,
 				currentFrame: 1,
 				frameCount: 2,
 				frameWidth: 32,
@@ -210,7 +230,7 @@ describe("sprite", () => {
 			const sprite = {
 				element: document.createElement("div"),
 				canvas: document.createElement("canvas"),
-				context: mockContext as CanvasRenderingContext2D,
+				context: mockContext as unknown as CanvasRenderingContext2D,
 				currentFrame: 0,
 				frameCount: 2,
 				frameWidth: 32,
@@ -238,7 +258,7 @@ describe("sprite", () => {
 			const sprite = {
 				element: document.createElement("div"),
 				canvas: document.createElement("canvas"),
-				context: mockContext as CanvasRenderingContext2D,
+				context: mockContext as unknown as CanvasRenderingContext2D,
 				currentFrame: 0,
 				frameCount: 2,
 				frameWidth: 32,
@@ -250,6 +270,303 @@ describe("sprite", () => {
 
 			expect(sprite.facingDirection).toBe("right");
 			expect(mockContext.save).not.toHaveBeenCalled();
+		});
+	});
+});
+
+// SpriteRenderer class tests
+import { SpriteRenderer } from "./sprite";
+import type { AnimationsConfig, Position, SpriteConfig } from "./types";
+
+describe("SpriteRenderer class", () => {
+	let parentElement: HTMLDivElement;
+
+	const defaultAnimations: AnimationsConfig = {
+		walk: {
+			start: [0, 0],
+			numFrames: 2,
+			repeat: true,
+			interval: 100,
+		},
+		action: {
+			start: [64, 0],
+			numFrames: 1,
+			repeat: false,
+			interval: 200,
+		},
+	};
+
+	const defaultConfig: SpriteConfig = {
+		spriteUrl: "data:image/png;base64,test",
+		spriteWidth: 32,
+		spriteHeight: 32,
+		spriteFrames: 2,
+		transparentColor: "rgb(0, 255, 0)",
+		animationInterval: 125,
+		animations: defaultAnimations,
+	};
+
+	beforeEach(() => {
+		parentElement = document.createElement("div");
+		document.body.appendChild(parentElement);
+	});
+
+	afterEach(() => {
+		parentElement.remove();
+		vi.clearAllTimers();
+	});
+
+	describe("constructor", () => {
+		it("should initialize sprite renderer with config", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			expect(parentElement.children.length).toBe(1);
+			const wrapper = parentElement.children[0]; // This is the wrapper div we created
+			expect(wrapper.children.length).toBe(1);
+			const spriteElement = wrapper.children[0]; // This is the sprite element div
+			expect(spriteElement.children.length).toBe(1);
+			expect(spriteElement.children[0].tagName).toBe("CANVAS"); // This is the canvas
+		});
+
+		it("should throw error if parent element is not provided", () => {
+			expect(() => {
+				new SpriteRenderer(defaultConfig, undefined as unknown as HTMLElement);
+			}).toThrow();
+		});
+	});
+
+	describe("initialize", () => {
+		it("should create DOM elements and load sprite", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+
+			await sprite.initialize();
+
+			const wrapper = parentElement.children[0] as HTMLDivElement;
+			expect(wrapper.style.position).toBe("fixed");
+			expect(wrapper.className).toBe("mouse-follower");
+
+			const spriteElement = wrapper.children[0] as HTMLDivElement;
+			expect(spriteElement.style.position).toBe("absolute");
+
+			const canvas = spriteElement.children[0] as HTMLCanvasElement;
+			expect(canvas.width).toBe(32);
+			expect(canvas.height).toBe(32);
+		});
+
+		it("should reject on sprite load error", async () => {
+			// Mock failing image
+			class FailingMockImage {
+				onload: (() => void) | null = null;
+				onerror: (() => void) | null = null;
+				crossOrigin = "";
+				width = 64;
+				height = 32;
+
+				constructor() {
+					queueMicrotask(() => {
+						if (this.onerror) this.onerror();
+					});
+				}
+
+				set src(_: string) {
+					queueMicrotask(() => {
+						if (this.onerror) this.onerror();
+					});
+				}
+			}
+
+			const originalImage = global.Image;
+			global.Image = FailingMockImage as typeof Image;
+
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+
+			await expect(sprite.initialize()).rejects.toThrow();
+
+			global.Image = originalImage;
+		});
+	});
+
+	describe("render", () => {
+		it("should render sprite at given position", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			const position: Position = { x: 100, y: 50 };
+			sprite.render(position);
+
+			const wrapper = parentElement.children[0] as HTMLDivElement;
+			expect(wrapper.style.transform).toBe("translate(84px, 34px)");
+		});
+
+		it("should render sprite with direction", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			const position: Position = { x: 100, y: 50 };
+			sprite.render(position, "left");
+
+			// Should have called scale(-1, 1) for left facing
+			// This is tested implicitly through the sprite rendering
+			const wrapper = parentElement.children[0] as HTMLDivElement;
+			expect(wrapper.style.transform).toBe("translate(84px, 34px)");
+		});
+
+		it("should do nothing if not initialized", () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			const position: Position = { x: 100, y: 50 };
+
+			expect(() => sprite.render(position)).not.toThrow();
+		});
+	});
+
+	describe("playAnimation", () => {
+		vi.useFakeTimers();
+
+		it("should start playing animation", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			sprite.playAnimation("walk");
+
+			expect(sprite.isAnimating()).toBe(true);
+		});
+
+		it("should handle non-existent animation", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			sprite.playAnimation("invalid");
+
+			expect(sprite.isAnimating()).toBe(false);
+		});
+
+		it("should stop previous animation when starting new one", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			sprite.playAnimation("walk");
+			expect(sprite.isAnimating()).toBe(true);
+
+			sprite.playAnimation("action"); // Single-frame animation
+			expect(sprite.isAnimating()).toBe(false); // Should not be animating for single-frame
+		});
+
+		it("should handle single-frame animations", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			sprite.playAnimation("action"); // Single frame animation
+
+			expect(sprite.isAnimating()).toBe(false);
+		});
+
+		it("should handle repeating animations", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			sprite.playAnimation("walk");
+
+			// Advance time beyond one animation cycle
+			vi.advanceTimersByTime(300);
+
+			expect(sprite.isAnimating()).toBe(true);
+		});
+
+		it("should do nothing if not initialized", () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+
+			expect(() => sprite.playAnimation("walk")).not.toThrow();
+			expect(sprite.isAnimating()).toBe(false);
+		});
+	});
+
+	describe("pauseAnimation", () => {
+		vi.useFakeTimers();
+
+		it("should pause current animation", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			sprite.playAnimation("walk");
+			expect(sprite.isAnimating()).toBe(true);
+
+			sprite.pauseAnimation();
+			expect(sprite.isAnimating()).toBe(false);
+		});
+
+		it("should do nothing if no animation is playing", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			expect(() => sprite.pauseAnimation()).not.toThrow();
+			expect(sprite.isAnimating()).toBe(false);
+		});
+	});
+
+	describe("destroy", () => {
+		it("should clean up DOM elements", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			expect(parentElement.children.length).toBe(1);
+
+			sprite.destroy();
+
+			expect(parentElement.children.length).toBe(0);
+		});
+
+		it("should stop any running animations", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			sprite.playAnimation("walk");
+			expect(sprite.isAnimating()).toBe(true);
+
+			sprite.destroy();
+
+			expect(sprite.isAnimating()).toBe(false);
+		});
+
+		it("should be safe to call multiple times", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			sprite.destroy();
+			expect(() => sprite.destroy()).not.toThrow();
+		});
+
+		it("should be safe to call before initialization", () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+
+			expect(() => sprite.destroy()).not.toThrow();
+		});
+	});
+
+	describe("isAnimating", () => {
+		it("should return false initially", () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+
+			expect(sprite.isAnimating()).toBe(false);
+		});
+
+		it("should return true when animation is playing", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			sprite.playAnimation("walk");
+
+			expect(sprite.isAnimating()).toBe(true);
+		});
+
+		it("should return false when animation is paused", async () => {
+			const sprite = new SpriteRenderer(defaultConfig, parentElement);
+			await sprite.initialize();
+
+			sprite.playAnimation("walk");
+			sprite.pauseAnimation();
+
+			expect(sprite.isAnimating()).toBe(false);
 		});
 	});
 });

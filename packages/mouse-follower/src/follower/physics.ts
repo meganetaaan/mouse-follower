@@ -1,27 +1,7 @@
-export interface Position {
-	x: number;
-	y: number;
-}
+import type { IPhysics, PhysicsConfig, PhysicsState, Position, Velocity } from "./types.js";
 
-export interface Velocity {
-	x: number;
-	y: number;
-}
-
-export interface PhysicsState {
-	position: Position;
-	velocity: Velocity;
-	target: Position;
-}
-
-export interface PhysicsConfig {
-	maxAccel: number;
-	maxVelocity: number;
-	stopWithin: number;
-	brakingStartDistance: number;
-	brakingStrength: number;
-	minStopVelocity: number;
-}
+// Re-export PhysicsState for the index file
+export type { PhysicsState } from "./types.js";
 
 function calculateDistance(from: Position, to: Position): number {
 	const dx = to.x - from.x;
@@ -138,4 +118,43 @@ export function updatePhysics(
 		velocity: { x: newVelocityX, y: newVelocityY },
 		target: state.target,
 	};
+}
+
+
+export class Physics implements IPhysics {
+	private state: PhysicsState;
+	private config: PhysicsConfig;
+
+	constructor(config: PhysicsConfig, initialPosition: Position) {
+		this.config = config;
+		this.state = {
+			position: { ...initialPosition },
+			velocity: { x: 0, y: 0 },
+			target: { ...initialPosition },
+		};
+	}
+
+	update(deltaTime: number): void {
+		this.state = updatePhysics(this.state, this.config, deltaTime);
+	}
+
+	setTarget(target: Position): void {
+		this.state.target = { ...target };
+	}
+
+	getPosition(): Position {
+		return { ...this.state.position };
+	}
+
+	getVelocity(): Position {
+		return { ...this.state.velocity };
+	}
+
+	isMoving(threshold: number = 10.0): boolean {
+		const speed = Math.sqrt(
+			this.state.velocity.x * this.state.velocity.x +
+				this.state.velocity.y * this.state.velocity.y,
+		);
+		return speed > threshold;
+	}
 }
