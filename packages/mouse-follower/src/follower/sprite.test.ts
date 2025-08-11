@@ -74,7 +74,13 @@ describe("sprite", () => {
 				spriteWidth: 32,
 				spriteHeight: 64,
 				animationInterval: 125,
-				animations: { walk: { start: [0, 0] as [number, number], numFrames: 1, repeat: false } },
+				animations: {
+					walk: {
+						start: [0, 0] as [number, number],
+						numFrames: 1,
+						repeat: false,
+					},
+				},
 			};
 
 			const sprite = await createSprite(element, config);
@@ -94,7 +100,13 @@ describe("sprite", () => {
 				spriteWidth: 32,
 				spriteHeight: 64,
 				animationInterval: 125,
-				animations: { walk: { start: [0, 0] as [number, number], numFrames: 1, repeat: false } },
+				animations: {
+					walk: {
+						start: [0, 0] as [number, number],
+						numFrames: 1,
+						repeat: false,
+					},
+				},
 			};
 
 			await createSprite(element, config);
@@ -111,7 +123,13 @@ describe("sprite", () => {
 				spriteHeight: 64,
 				transparentColor: "rgb(0, 255, 0)",
 				animationInterval: 125,
-				animations: { walk: { start: [0, 0] as [number, number], numFrames: 1, repeat: false } },
+				animations: {
+					walk: {
+						start: [0, 0] as [number, number],
+						numFrames: 1,
+						repeat: false,
+					},
+				},
 			};
 
 			const sprite = await createSprite(element, config);
@@ -153,7 +171,13 @@ describe("sprite", () => {
 				spriteWidth: 32,
 				spriteHeight: 64,
 				animationInterval: 125,
-				animations: { walk: { start: [0, 0] as [number, number], numFrames: 1, repeat: false } },
+				animations: {
+					walk: {
+						start: [0, 0] as [number, number],
+						numFrames: 1,
+						repeat: false,
+					},
+				},
 			};
 
 			await expect(createSprite(element, config)).rejects.toThrow();

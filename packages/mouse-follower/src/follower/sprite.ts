@@ -1,4 +1,9 @@
-import type { ISprite, Position, SpriteConfig, SpriteDirection } from "./types.js";
+import type {
+	ISprite,
+	Position,
+	SpriteConfig,
+	SpriteDirection,
+} from "./types.js";
 
 export interface Sprite {
 	element: HTMLDivElement;

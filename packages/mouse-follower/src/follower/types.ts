@@ -205,7 +205,7 @@ export interface IPhysics {
 	update(deltaTime: number): void;
 	setTarget(target: Position): void;
 	getPosition(): Position;
-	getVelocity(): Position;
+	getVelocity(): Velocity;
 	isMoving(threshold?: number): boolean;
 }
 
