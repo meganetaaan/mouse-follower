@@ -1,5 +1,5 @@
 import { Physics } from "./follower/physics.js";
-import { SpriteRenderer } from "./follower/sprite.js";
+import { Sprite } from "./follower/sprite.js";
 import type {
 	FollowerOptions,
 	FollowerStartEvent,
@@ -7,10 +7,10 @@ import type {
 	FollowTarget,
 	Follower as IFollower,
 	IPhysics,
-	ISprite,
 	PhysicsConfig,
 	Position,
 	SpriteConfig,
+	SpriteDirection,
 } from "./follower/types.js";
 import {
 	DEFAULT_ANIMATIONS,
@@ -29,7 +29,7 @@ interface ProcessedOptions {
 class FollowerImpl implements IFollower {
 	private options: ProcessedOptions;
 	private physics: IPhysics;
-	private sprite: ISprite;
+	private sprite: Sprite;
 	private animationId?: number;
 	private lastTime: number = 0;
 	private isRunning: boolean = false;
@@ -106,7 +106,7 @@ class FollowerImpl implements IFollower {
 
 		// Create Physics and Sprite instances
 		this.physics = new Physics(physicsConfig, initialPosition);
-		this.sprite = new SpriteRenderer(spriteConfig, bindTo);
+		this.sprite = new Sprite(spriteConfig, bindTo);
 	}
 
 	async start(): Promise<void> {
@@ -204,7 +204,7 @@ class FollowerImpl implements IFollower {
 		const velocity = this.physics.getVelocity();
 
 		// Determine sprite direction based on velocity
-		let direction: "left" | "right" = "right";
+		let direction: SpriteDirection = "right";
 		if (Math.abs(velocity.x) > 0.1) {
 			direction = velocity.x < 0 ? "left" : "right";
 		}

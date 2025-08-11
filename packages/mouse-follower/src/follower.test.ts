@@ -21,31 +21,49 @@ global.HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
 		height: 1,
 	})),
 	putImageData: vi.fn(),
-}));
+	// biome-ignore lint/suspicious/noExplicitAny: mock
+})) as any;
 
 global.HTMLCanvasElement.prototype.toDataURL = vi.fn(
 	() => "data:image/png;base64,test",
 );
 
 // Mock Image loading
-const mockImage = {
-	onload: null as (() => void) | null,
-	onerror: null as (() => void) | null,
-	src: "",
-	crossOrigin: "",
-	width: 64,
-	height: 64,
-};
+class MockImage {
+	onload: (() => void) | null = null;
+	onerror: (() => void) | null = null;
+	src: string = "";
+	crossOrigin: string = "";
+	width: number = 64;
+	height: number = 64;
+	complete: boolean = false;
 
-global.Image = vi.fn(() => mockImage) as unknown as typeof Image;
+	constructor() {
+		// Simulate async image loading
+		setTimeout(() => {
+			this.complete = true;
+			if (this.onload) {
+				this.onload();
+			}
+		}, 0);
+	}
+}
+
+global.Image = MockImage as unknown as typeof Image;
 
 describe("follower", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
-		// Reset image mock
-		mockImage.onload = null;
-		mockImage.onerror = null;
-		mockImage.src = "";
+		// Reset global Image mock for each test
+		global.Image = vi.fn(() => {
+			const img = new MockImage();
+			// Run onload synchronously for tests
+			queueMicrotask(() => {
+				img.complete = true;
+				if (img.onload) img.onload();
+			});
+			return img;
+		}) as unknown as typeof Image;
 	});
 
 	afterEach(() => {
@@ -68,11 +86,10 @@ describe("follower", () => {
 	it("should create DOM element when started", async () => {
 		const s = follower();
 
-		// Start the follower and simulate image load
+		// Start the follower and wait for async operations
 		const startPromise = s.start();
-		if (mockImage.onload) {
-			mockImage.onload();
-		}
+		// Advance microtasks to trigger image onload
+		await vi.runOnlyPendingTimersAsync();
 		await startPromise;
 
 		const elements = document.querySelectorAll(".mouse-follower");
@@ -85,11 +102,9 @@ describe("follower", () => {
 		const mouseTarget = new MouseTarget();
 		const s = follower({ target: mouseTarget });
 
-		// Start the follower and simulate image load
+		// Start the follower and wait for async operations
 		const startPromise = s.start();
-		if (mockImage.onload) {
-			mockImage.onload();
-		}
+		await vi.runOnlyPendingTimersAsync();
 		await startPromise;
 
 		const event = new MouseEvent("mousemove", {
@@ -126,15 +141,33 @@ describe("follower", () => {
 	});
 
 	it("should handle sprite loading errors gracefully", async () => {
+		const originalImage = global.Image;
+
+		// Mock failing Image for this test
+		global.Image = vi.fn(() => {
+			const img = {
+				onload: null as (() => void) | null,
+				onerror: null as (() => void) | null,
+				src: "",
+				crossOrigin: "",
+				width: 64,
+				height: 64,
+				complete: false,
+			};
+			// Trigger error immediately
+			queueMicrotask(() => {
+				if (img.onerror) img.onerror();
+			});
+			return img;
+		}) as unknown as typeof Image;
+
 		const s = follower();
 
-		// Start the follower and simulate image error
-		const startPromise = s.start();
-		if (mockImage.onerror) {
-			mockImage.onerror();
-		}
+		// Handle promise rejection properly to avoid unhandled rejection
+		await expect(s.start()).rejects.toThrow();
 
-		await expect(startPromise).rejects.toThrow();
+		// Restore original Image
+		global.Image = originalImage;
 	});
 
 	it("should apply target offset using OffsetTarget", async () => {
@@ -143,9 +176,7 @@ describe("follower", () => {
 		const s = follower({ target: offsetTarget });
 
 		const startPromise = s.start();
-		if (mockImage.onload) {
-			mockImage.onload();
-		}
+		await vi.runOnlyPendingTimersAsync();
 		await startPromise;
 
 		// Simulate mouse movement
@@ -177,9 +208,7 @@ describe("follower", () => {
 		const s = follower({ target: mouseTarget });
 
 		const startPromise = s.start();
-		if (mockImage.onload) {
-			mockImage.onload();
-		}
+		await vi.runOnlyPendingTimersAsync();
 		await startPromise;
 
 		// Test event listener registration
@@ -208,9 +237,7 @@ describe("follower", () => {
 		const s = follower({ target: mouseTarget });
 
 		const startPromise = s.start();
-		if (mockImage.onload) {
-			mockImage.onload();
-		}
+		await vi.runOnlyPendingTimersAsync();
 		await startPromise;
 
 		// Test that playAnimation method exists and can be called
