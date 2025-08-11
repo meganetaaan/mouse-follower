@@ -1,5 +1,24 @@
 # @meganetaaan/mouse-follower
 
+## 1.2.0
+
+### Minor Changes
+
+- [#20](https://github.com/meganetaaan/mouse-follower/pull/20) [`6b0acb6`](https://github.com/meganetaaan/mouse-follower/commit/6b0acb6212307621f3eb650b516744739e44df40) Thanks [@meganetaaan](https://github.com/meganetaaan)! - Refactor to monorepo structure with separate library and demo packages
+
+  - Move library to packages/mouse-follower/ directory
+  - Move demo to packages/demo/ directory
+  - Add pnpm workspace configuration
+  - Update CI/CD workflows for monorepo
+  - Add changesets for version management
+  - Add test coverage reporting with @vitest/coverage-v8
+  - Update documentation for new structure
+  - Replace semantic-release with changesets workflow
+
+### Patch Changes
+
+- [#16](https://github.com/meganetaaan/mouse-follower/pull/16) [`7ca1e16`](https://github.com/meganetaaan/mouse-follower/commit/7ca1e160b2a7232c8199944a17308524f7639e4e) Thanks [@meganetaaan](https://github.com/meganetaaan)! - Sprit README into two parts (monorepo/library)
+
 ## 1.1.1
 
 ### Patch Changes
