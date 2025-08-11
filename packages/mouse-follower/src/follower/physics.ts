@@ -1,27 +1,13 @@
-export interface Position {
-	x: number;
-	y: number;
-}
+import type {
+	IPhysics,
+	PhysicsConfig,
+	PhysicsState,
+	Position,
+	Velocity,
+} from "./types.js";
 
-export interface Velocity {
-	x: number;
-	y: number;
-}
-
-export interface PhysicsState {
-	position: Position;
-	velocity: Velocity;
-	target: Position;
-}
-
-export interface PhysicsConfig {
-	maxAccel: number;
-	maxVelocity: number;
-	stopWithin: number;
-	brakingStartDistance: number;
-	brakingStrength: number;
-	minStopVelocity: number;
-}
+// Re-export PhysicsState for the index file
+export type { PhysicsState } from "./types.js";
 
 function calculateDistance(from: Position, to: Position): number {
 	const dx = to.x - from.x;
@@ -81,12 +67,16 @@ export function updatePhysics(
 	deltaTime: number,
 ): PhysicsState {
 	const distance = calculateDistance(state.position, state.target);
-	const currentSpeed = Math.sqrt(
-		state.velocity.x * state.velocity.x + state.velocity.y * state.velocity.y,
-	);
+	const currentSpeedSquared =
+		state.velocity.x * state.velocity.x + state.velocity.y * state.velocity.y;
+	const minStopVelocitySquared =
+		config.minStopVelocity * config.minStopVelocity;
 
-	// Check for complete stop condition: both distance and speed are very small
-	if (distance <= config.stopWithin && currentSpeed <= config.minStopVelocity) {
+	// Check for complete stop condition using squared values (avoid sqrt)
+	if (
+		distance <= config.stopWithin &&
+		currentSpeedSquared <= minStopVelocitySquared
+	) {
 		return {
 			position: state.position,
 			velocity: { x: 0, y: 0 },
@@ -120,14 +110,17 @@ export function updatePhysics(
 		accel.y * deltaTime -
 		state.velocity.y * brakingForce * deltaTime;
 
-	// Apply velocity limit
-	const newSpeed = Math.sqrt(
-		newVelocityX * newVelocityX + newVelocityY * newVelocityY,
-	);
+	// Apply velocity limit using squared comparison when possible
+	const newSpeedSquared =
+		newVelocityX * newVelocityX + newVelocityY * newVelocityY;
+	const maxVelocitySquared = config.maxVelocity * config.maxVelocity;
 
-	if (newSpeed > config.maxVelocity) {
-		newVelocityX = (newVelocityX / newSpeed) * config.maxVelocity;
-		newVelocityY = (newVelocityY / newSpeed) * config.maxVelocity;
+	if (newSpeedSquared > maxVelocitySquared) {
+		// Only calculate sqrt when velocity limiting is needed
+		const newSpeed = Math.sqrt(newSpeedSquared);
+		const scale = config.maxVelocity / newSpeed;
+		newVelocityX *= scale;
+		newVelocityY *= scale;
 	}
 
 	const newPositionX = state.position.x + newVelocityX * deltaTime;
@@ -138,4 +131,42 @@ export function updatePhysics(
 		velocity: { x: newVelocityX, y: newVelocityY },
 		target: state.target,
 	};
+}
+
+export class Physics implements IPhysics {
+	private state: PhysicsState;
+	private config: PhysicsConfig;
+
+	constructor(config: PhysicsConfig, initialPosition: Position) {
+		this.config = config;
+		this.state = {
+			position: { ...initialPosition },
+			velocity: { x: 0, y: 0 },
+			target: { ...initialPosition },
+		};
+	}
+
+	update(deltaTime: number): void {
+		this.state = updatePhysics(this.state, this.config, deltaTime);
+	}
+
+	setTarget(target: Position): void {
+		this.state.target = { ...target };
+	}
+
+	getPosition(): Position {
+		return { ...this.state.position };
+	}
+
+	getVelocity(): Velocity {
+		return { ...this.state.velocity };
+	}
+
+	isMoving(threshold: number = 10.0): boolean {
+		const speed = Math.sqrt(
+			this.state.velocity.x * this.state.velocity.x +
+				this.state.velocity.y * this.state.velocity.y,
+		);
+		return speed > threshold;
+	}
 }

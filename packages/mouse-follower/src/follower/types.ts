@@ -3,6 +3,17 @@ export interface Position {
 	y: number;
 }
 
+export interface Velocity {
+	x: number;
+	y: number;
+}
+
+export interface PhysicsState {
+	position: Position;
+	velocity: Velocity;
+	target: Position;
+}
+
 export interface FollowTarget {
 	x: number;
 	y: number;
@@ -17,6 +28,27 @@ export interface PhysicsOptions {
 		strength?: number;
 		minVelocity?: number;
 	};
+}
+
+// Configuration interface for Physics class constructor
+export interface PhysicsConfig {
+	maxAccel: number;
+	maxVelocity: number;
+	stopWithin: number;
+	brakingStartDistance: number;
+	brakingStrength: number;
+	minStopVelocity: number;
+}
+
+// Configuration interface for Sprite class constructor
+export interface SpriteConfig {
+	spriteUrl: string;
+	spriteWidth: number;
+	spriteHeight: number;
+	spriteFrames?: number;
+	transparentColor?: string;
+	animationInterval: number;
+	animations: AnimationsConfig;
 }
 
 export interface AnimationConfig {
@@ -167,6 +199,28 @@ export function stackChanPreset(): SpriteOptions {
 }
 
 export const SPRITE_PRESET_STACK_CHAN: SpriteOptions = stackChanPreset();
+
+// Physics class interface
+export interface IPhysics {
+	update(deltaTime: number): void;
+	setTarget(target: Position): void;
+	getPosition(): Position;
+	getVelocity(): Velocity;
+	isMoving(threshold?: number): boolean;
+}
+
+// Sprite class interface
+export interface ISprite {
+	initialize(): Promise<void>;
+	render(position: Position, direction?: SpriteDirection): void;
+	playAnimation(name: string): void;
+	pauseAnimation(): void;
+	destroy(): void;
+	isAnimating(): boolean;
+}
+
+// Sprite direction type (moved from sprite.ts for interface dependency)
+export type SpriteDirection = "left" | "right";
 
 export const DEFAULTS = {
 	physics: {

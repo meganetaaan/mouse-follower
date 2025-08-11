@@ -1,90 +1,66 @@
+import { Physics } from "./follower/physics.js";
+import { Sprite } from "./follower/sprite.js";
+import type {
+	FollowerOptions,
+	FollowerStartEvent,
+	FollowerStopEvent,
+	FollowTarget,
+	Follower as IFollower,
+	IPhysics,
+	PhysicsConfig,
+	Position,
+	SpriteConfig,
+	SpriteDirection,
+} from "./follower/types.js";
 import {
-	type PhysicsState,
-	type Position,
-	updatePhysics,
-} from "./follower/physics.js";
-import {
-	createSprite,
-	renderSpriteAt,
-	type Sprite,
-} from "./follower/sprite.js";
-import {
-	type AnimationsConfig,
 	DEFAULT_ANIMATIONS,
 	DEFAULTS,
-	type FollowerOptions,
-	type FollowerStartEvent,
-	type FollowerStopEvent,
-	type FollowTarget,
-	type Follower as IFollower,
 	MouseTarget,
 	OffsetTarget,
 } from "./follower/types.js";
 
-interface FlattenedOptions {
+interface ProcessedOptions {
 	followTarget: FollowTarget;
 	bindTo: HTMLElement;
-	maxVelocity: number;
-	maxAccel: number;
-	stopWithin: number;
-	brakingStartDistance: number;
-	brakingStrength: number;
-	minStopVelocity: number;
-	animationInterval: number;
-	spriteUrl: string;
-	spriteFrames: number;
-	spriteWidth: number;
-	spriteHeight: number;
-	transparentColor: string;
-	animations: AnimationsConfig;
+	physicsConfig: PhysicsConfig;
+	spriteConfig: SpriteConfig;
 }
 
 class FollowerImpl implements IFollower {
-	private _x: number = 0;
-	private _y: number = 0;
-
-	get x(): number {
-		return this._x;
-	}
-
-	set x(value: number) {
-		this._x = value;
-		if (this.physicsState) {
-			this.physicsState.position.x = value;
-		}
-	}
-
-	get y(): number {
-		return this._y;
-	}
-
-	set y(value: number) {
-		this._y = value;
-		if (this.physicsState) {
-			this.physicsState.position.y = value;
-		}
-	}
-
-	private options: FlattenedOptions;
-	private physicsState: PhysicsState;
-	private sprite?: Sprite;
+	private options: ProcessedOptions;
+	private physics: IPhysics;
+	private sprite: Sprite;
 	private animationId?: number;
-	private spriteIntervalId?: number;
 	private lastTime: number = 0;
 	private isRunning: boolean = false;
-	// Animation properties
-	private currentAnimation: string = "walk";
-	private animationFrame: number = 0;
 	// Event system
 	private eventTarget = new EventTarget();
 	private wasMoving: boolean = false;
 
+	get x(): number {
+		return this.physics.getPosition().x;
+	}
+
+	set x(value: number) {
+		const currentPos = this.physics.getPosition();
+		this.physics.setTarget({ x: value, y: currentPos.y });
+	}
+
+	get y(): number {
+		return this.physics.getPosition().y;
+	}
+
+	set y(value: number) {
+		const currentPos = this.physics.getPosition();
+		this.physics.setTarget({ x: currentPos.x, y: value });
+	}
+
 	constructor(options: FollowerOptions = {}) {
-		// Flatten nested options into the internal format
-		this.options = {
-			followTarget: options.target || mouseTarget(),
-			bindTo: options.bindTo || document.body,
-			// Physics options
+		// Process options
+		const followTarget = options.target || mouseTarget();
+		const bindTo = options.bindTo || document.body;
+
+		const physicsConfig: PhysicsConfig = {
 			maxVelocity: options.physics?.velocity ?? DEFAULTS.physics.velocity,
 			maxAccel: options.physics?.accel ?? DEFAULTS.physics.accel,
 			stopWithin:
@@ -97,7 +73,9 @@ class FollowerImpl implements IFollower {
 			minStopVelocity:
 				options.physics?.braking?.minVelocity ??
 				DEFAULTS.physics.braking.minVelocity,
-			// Sprite options - merge with defaults
+		};
+
+		const spriteConfig: SpriteConfig = {
 			spriteUrl: options.sprite?.url ?? DEFAULTS.sprite.url ?? "/ugo-mini.png",
 			spriteFrames: options.sprite?.frames ?? DEFAULTS.sprite.frames ?? 2,
 			spriteWidth: options.sprite?.width ?? DEFAULTS.sprite.width ?? 32,
@@ -106,7 +84,6 @@ class FollowerImpl implements IFollower {
 				options.sprite?.transparentColor ??
 				DEFAULTS.sprite.transparentColor ??
 				"rgb(0, 255, 0)",
-			// Animation options
 			animationInterval:
 				options.sprite?.animation?.interval ??
 				DEFAULTS.sprite.animation?.interval ??
@@ -117,50 +94,37 @@ class FollowerImpl implements IFollower {
 				DEFAULT_ANIMATIONS,
 		};
 
-		// Initialize position to current target position
-		const initialX = this.options.followTarget.x;
-		const initialY = this.options.followTarget.y;
-
-		this.physicsState = {
-			position: { x: initialX, y: initialY },
-			velocity: { x: 0, y: 0 },
-			target: { x: initialX, y: initialY },
+		this.options = {
+			followTarget,
+			bindTo,
+			physicsConfig,
+			spriteConfig,
 		};
-		this._x = initialX;
-		this._y = initialY;
+
+		// Initialize position to current target position
+		const initialPosition = { x: followTarget.x, y: followTarget.y };
+
+		// Create Physics and Sprite instances
+		this.physics = new Physics(physicsConfig, initialPosition);
+		this.sprite = new Sprite(spriteConfig, bindTo);
 	}
 
 	async start(): Promise<void> {
 		if (this.isRunning) return;
 
-		const wrapper = document.createElement("div");
-		wrapper.className = "mouse-follower";
-		wrapper.style.position = "fixed";
-		wrapper.style.left = "0";
-		wrapper.style.top = "0";
-		wrapper.style.pointerEvents = "none";
-		wrapper.style.zIndex = "9999";
-		this.options.bindTo.appendChild(wrapper);
-
 		try {
-			this.sprite = await createSprite(wrapper, {
-				spriteUrl: this.options.spriteUrl,
-				spriteWidth: this.options.spriteWidth,
-				spriteHeight: this.options.spriteHeight,
-				spriteFrames: this.options.spriteFrames,
-				transparentColor: this.options.transparentColor,
-			});
+			// Initialize the sprite
+			await this.sprite.initialize();
 
 			this.lastTime = performance.now();
 			this.isRunning = true;
 
 			// Start walking animation
-			this.playAnimation("walk");
+			this.sprite.playAnimation("walk");
 
 			this.animate();
 		} catch (error) {
-			console.error("Failed to create sprite:", error);
-			wrapper.remove();
+			console.error("Failed to initialize sprite:", error);
 			throw error;
 		}
 	}
@@ -171,10 +135,7 @@ class FollowerImpl implements IFollower {
 			cancelAnimationFrame(this.animationId);
 			this.animationId = undefined;
 		}
-		if (this.spriteIntervalId) {
-			clearInterval(this.spriteIntervalId);
-			this.spriteIntervalId = undefined;
-		}
+		this.sprite.pauseAnimation();
 	}
 
 	setTarget(target: FollowTarget): void {
@@ -183,79 +144,15 @@ class FollowerImpl implements IFollower {
 
 	destroy(): void {
 		this.stop();
-		if (this.sprite) {
-			const wrapper = this.sprite.element.parentElement;
-			if (wrapper) {
-				wrapper.remove();
-			}
-			this.sprite = undefined;
-		}
+		this.sprite.destroy();
 	}
 
 	playAnimation(name: string): void {
-		const animation = this.options.animations[name];
-		if (!animation || !this.sprite) return;
-
-		// Stop current animation interval if it exists
-		if (this.spriteIntervalId) {
-			clearInterval(this.spriteIntervalId);
-			this.spriteIntervalId = undefined;
-		}
-
-		// Set up new animation
-		this.currentAnimation = name;
-		this.animationFrame = 0;
-
-		// Render first frame immediately
-		this.renderAnimationFrame();
-
-		// If it's a single frame animation or non-repeating animation that's done, don't set interval
-		if (
-			animation.numFrames === 1 ||
-			(!animation.repeat && this.animationFrame >= animation.numFrames - 1)
-		) {
-			return;
-		}
-
-		// Set up interval for animation
-		const interval = animation.interval || this.options.animationInterval;
-		this.spriteIntervalId = window.setInterval(() => {
-			if (!this.sprite) return;
-
-			this.animationFrame++;
-
-			if (this.animationFrame >= animation.numFrames) {
-				if (animation.repeat) {
-					this.animationFrame = 0;
-				} else {
-					// Animation finished, stop interval
-					if (this.spriteIntervalId) {
-						clearInterval(this.spriteIntervalId);
-						this.spriteIntervalId = undefined;
-					}
-					// Keep showing last frame
-					this.animationFrame = animation.numFrames - 1;
-				}
-			}
-
-			this.renderAnimationFrame();
-		}, interval);
+		this.sprite.playAnimation(name);
 	}
 
 	pauseAnimation(): void {
-		this.pauseSpriteAnimation();
-	}
-
-	private renderAnimationFrame(): void {
-		if (!this.sprite) return;
-		const animation = this.options.animations[this.currentAnimation];
-		if (!animation) return;
-
-		const x =
-			animation.start[0] + this.animationFrame * this.options.spriteWidth;
-		const y = animation.start[1];
-
-		renderSpriteAt(this.sprite, x, y, this.sprite.facingDirection);
+		this.sprite.pauseAnimation();
 	}
 
 	addEventListener(
@@ -290,13 +187,6 @@ class FollowerImpl implements IFollower {
 		this.eventTarget.removeEventListener(type, listener);
 	}
 
-	private pauseSpriteAnimation(): void {
-		if (this.spriteIntervalId) {
-			clearInterval(this.spriteIntervalId);
-			this.spriteIntervalId = undefined;
-		}
-	}
-
 	private animate = (): void => {
 		if (!this.isRunning) return;
 
@@ -304,65 +194,41 @@ class FollowerImpl implements IFollower {
 		const deltaTime = (currentTime - this.lastTime) / 1000;
 		this.lastTime = currentTime;
 
+		// Update physics
 		const target = this.getTargetPosition();
-		this.physicsState.target = target;
+		this.physics.setTarget(target);
+		this.physics.update(deltaTime);
 
-		const config = {
-			maxAccel: this.options.maxAccel,
-			maxVelocity: this.options.maxVelocity,
-			stopWithin: this.options.stopWithin,
-			brakingStartDistance: this.options.brakingStartDistance,
-			brakingStrength: this.options.brakingStrength,
-			minStopVelocity: this.options.minStopVelocity,
-		};
+		// Get current position and velocity
+		const position = this.physics.getPosition();
+		const velocity = this.physics.getVelocity();
 
-		this.physicsState = updatePhysics(this.physicsState, config, deltaTime);
+		// Determine sprite direction based on velocity
+		let direction: SpriteDirection = "right";
+		if (Math.abs(velocity.x) > 0.1) {
+			direction = velocity.x < 0 ? "left" : "right";
+		}
 
-		this._x = this.physicsState.position.x;
-		this._y = this.physicsState.position.y;
+		// Render sprite at current position
+		this.sprite.render(position, direction);
 
-		if (this.sprite) {
-			// Update sprite direction based on velocity
-			const velocityX = this.physicsState.velocity.x;
-			if (Math.abs(velocityX) > 0.1) {
-				// Only change direction if moving significantly
-				const newDirection = velocityX < 0 ? "left" : "right";
-				if (this.sprite.facingDirection !== newDirection) {
-					this.sprite.facingDirection = newDirection;
-					// Re-render current frame with new direction
-					this.renderAnimationFrame();
-				}
+		// Detect movement state changes and emit events
+		const isMoving = this.physics.isMoving(10.0);
+		if (isMoving !== this.wasMoving) {
+			if (isMoving) {
+				this.eventTarget.dispatchEvent(
+					new CustomEvent("start", {
+						detail: { follower: this },
+					}),
+				);
+			} else {
+				this.eventTarget.dispatchEvent(
+					new CustomEvent("stop", {
+						detail: { follower: this },
+					}),
+				);
 			}
-
-			// Control sprite animation based on movement
-			const currentSpeed = Math.sqrt(
-				this.physicsState.velocity.x * this.physicsState.velocity.x +
-					this.physicsState.velocity.y * this.physicsState.velocity.y,
-			);
-
-			// Detect movement state changes and emit events
-			const isMoving = currentSpeed > 10.0; // Fixed threshold for movement detection
-			if (isMoving !== this.wasMoving) {
-				if (isMoving) {
-					this.eventTarget.dispatchEvent(
-						new CustomEvent("start", {
-							detail: { follower: this },
-						}),
-					);
-				} else {
-					this.eventTarget.dispatchEvent(
-						new CustomEvent("stop", {
-							detail: { follower: this },
-						}),
-					);
-				}
-				this.wasMoving = isMoving;
-			}
-
-			const wrapper = this.sprite.element.parentElement as HTMLDivElement;
-			const translateX = this.x - this.options.spriteWidth / 2;
-			const translateY = this.y - this.options.spriteHeight / 2;
-			wrapper.style.transform = `translate(${translateX}px, ${translateY}px)`;
+			this.wasMoving = isMoving;
 		}
 
 		this.animationId = requestAnimationFrame(this.animate);

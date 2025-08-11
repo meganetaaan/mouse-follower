@@ -2,17 +2,33 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Prerequisites
+
+- Node.js >=20.19.0
+- pnpm workspace for package management
+- Project uses ES modules (type: "module")
+
 ## Development Commands
 
 This project uses pnpm workspace to separate the library and demo application:
 
-- `pnpm dev` - Start Vite development server for demo application
+- `pnpm dev` - Start Vite development server for demo application (runs library + demo in parallel)
 - `pnpm build` - Build both library and demo
 - `pnpm build:lib` - Build library only
-- `pnpm build:demo` - Build demo only
+- `pnpm build:demo` - Build demo only (with GitHub Pages configuration)
 - `pnpm test` - Run library tests with Vitest
+- `pnpm test --watch` - Run tests in watch mode
+- `pnpm test --coverage` - Run tests with coverage report
 - `pnpm check:fix` - Run Biome linting and formatting with auto-fix
 - `pnpm publish:lib` - Publish library to npm
+
+## Release Management Commands
+
+This project uses Changesets for version management:
+
+- `pnpm changeset` - Create a new changeset for versioning
+- `pnpm version-packages` - Version packages based on changesets
+- `pnpm release` - Build and publish library with changeset publish
 
 ## Project Structure
 
@@ -90,13 +106,28 @@ This is a TypeScript mouse follower animation library. It creates animated sprit
 
 ## Testing Setup
 
-The library (`packages/mouse-follower/`) uses Vitest with jsdom environment for DOM testing. Key test patterns:
+The library (`packages/mouse-follower/`) uses Vitest with jsdom environment for DOM testing.
+
+### Configuration
+- **Environment**: jsdom (for DOM manipulation testing)
+- **Target**: ES2022
+- **Test Files**: Each module has corresponding `.test.ts` files
+- **Coverage**: Available via `pnpm test --coverage`
+- **Watch Mode**: Available via `pnpm test --watch`
+
+### Key Test Patterns
 - Canvas API is mocked with `vi.fn()` for all 2D context methods
 - Image loading is mocked with custom Image constructor
 - Timer mocking with `vi.useFakeTimers()` for animation testing
 - DOM cleanup in `afterEach` to remove follower elements
+- Physics calculations tested with pure function unit tests
+- Sprite rendering tested with mocked canvas context
 
-Each module has corresponding `.test.ts` files testing core functionality in isolation.
+### Running Tests
+- `pnpm test` - Run all tests once
+- `pnpm test --watch` - Run tests in watch mode during development
+- `pnpm test --coverage` - Generate test coverage report
+- `vitest run` - Direct Vitest command (from library package directory)
 
 ## Demo Application
 
@@ -111,4 +142,34 @@ The demo package (`packages/demo/`) demonstrates various follower configurations
 ### Demo Development
 - `packages/demo/src/main.ts` - Main demo application entry point
 - `packages/demo/public/` - Static assets for demo
-- Builds to `dist-demo/` for GitHub Pages deployment
+- Uses workspace dependency: `@meganetaaan/mouse-follower: "workspace:*"`
+- Builds to `dist/` directory for GitHub Pages deployment
+
+## Build Artifacts and Output
+
+### Library Package (`packages/mouse-follower/`)
+- **Source**: `src/` directory with TypeScript files
+- **Output**: `dist/` directory containing:
+  - `index.js` - Compiled JavaScript (ES modules)
+  - `index.d.ts` - TypeScript declaration files
+  - `assets/` - Copied sprite assets (e.g., stack-chan.png)
+- **Build Command**: `tsc && cp -r assets dist/`
+
+### Demo Application (`packages/demo/`)
+- **Source**: `src/main.ts` and `src/style.css`
+- **Output**: `dist/` directory with Vite build output
+- **Deployment**: GitHub Pages via GitHub Actions
+
+## Development Workflow
+
+### Conventional Commits
+This project follows Conventional Commits for automated versioning:
+- `feat:` - New features (minor version bump)
+- `fix:` - Bug fixes (patch version bump)
+- `feat!:` or `BREAKING CHANGE:` - Breaking changes (major version bump)
+- Use scopes: `(lib)`, `(demo)`, `(ci)`, `(deps)`, `(docs)`
+
+### Workspace Dependencies
+- Demo uses library via workspace dependency `"workspace:*"`
+- Changes to library are immediately available in demo during development
+- `pnpm dev` runs both library TypeScript watch and demo Vite dev server
